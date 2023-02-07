@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 
 from flask_bootstrap import Bootstrap
 from urllib.parse import *
-import sqlite3, hashlib, os, time, random
+import pymysql, hashlib, os, time, random
 
 app = Flask(__name__)
 app.secret_key = 'dev'
@@ -14,7 +14,8 @@ ALLOWED_EXTENSIONS = set(['jpeg', 'jpg', 'png', 'gif'])
 Bootstrap(app)
 
 def getLoginDetails():
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         if 'email' not in session:
             loggedIn = False
@@ -43,13 +44,15 @@ def parse(data):
     return ans
 
 def is_valid(email, password):
-    con = sqlite3.connect('database.db')
+    con = pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5)
     cur = con.cursor()
     cur.execute('SELECT email, password FROM users')
     data = cur.fetchall()
     for row in data:
         if row[0] == email and row[1] == hashlib.md5(password.encode()).hexdigest():
             return True
+    con.close()
     return False
 
 def allowed_file(filename):
@@ -79,7 +82,8 @@ def random_color():
 @app.route('/')
 def root():
     loggedIn, firstName, noOfItems = getLoginDetails()
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute('SELECT productId, name, price, description, image, stock FROM products')
         itemData = cur.fetchall()
@@ -87,11 +91,13 @@ def root():
         categoryData = cur.fetchall()
     if len(itemData) > 9:
         itemData = itemData[0:9]
+    conn.close()
     return render_template('index.html', itemData=itemData, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems, categoryData=categoryData)
 
 @app.route("/add")
 def admin():
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute("SELECT categoryId, name FROM categories")
         categories = cur.fetchall()
@@ -113,7 +119,8 @@ def addItem():
             filename = secure_filename(image.filename)
             image.save(os.path.join(UPLOAD_FOLDER, filename))
         imagename = filename
-        with sqlite3.connect('database.db') as conn:
+        with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
             try:
                 cur = conn.cursor()
                 cur.execute('''INSERT INTO products (name, price, description, image, stock, categoryId) VALUES (?, ?, ?, ?, ?, ?)''', (name, price, description, imagename, stock, categoryId))
@@ -128,7 +135,8 @@ def addItem():
 
 @app.route("/remove")
 def remove():
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute('SELECT productId, name, price, description, image, stock FROM products')
         data = cur.fetchall()
@@ -138,7 +146,8 @@ def remove():
 @app.route("/removeItem")
 def removeItem():
     productId = request.args.get('productId')
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         try:
             cur = conn.cursor()
             cur.execute('DELETE FROM products WHERE productID = ?', (productId, ))
@@ -154,7 +163,8 @@ def removeItem():
 @app.route('/displayCategory/<int:categoryId>')
 def displayCategory(categoryId):
     loggedIn, firstName, noOfItems = getLoginDetails()
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute(
             "SELECT products.productId, products.name, products.price, products.description, products.image, products.stock, categories.name FROM products, categories WHERE products.categoryId = categories.categoryId AND categories.categoryId = ?",
@@ -204,7 +214,8 @@ def register():
         lastName = request.form['lastName']
         phone = request.form['phone']
 
-        with sqlite3.connect('database.db') as con:
+        with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as con:
             try:
                 cur = con.cursor()
                 cur.execute('INSERT INTO users (password, email, firstName, lastName, phone) VALUES (?, ?, ?, ?, ?)', (hashlib.md5(password.encode()).hexdigest(), email, firstName, lastName, phone))
@@ -220,7 +231,8 @@ def register():
 def profileForm():
     if 'email' not in session:
         return redirect(url_for('loginForm'))
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute("SELECT userId, email, firstName, lastName, phone FROM users WHERE email = ?", (session['email'], ))
         profileData = cur.fetchone()
@@ -234,7 +246,8 @@ def editProfile():
         firstName = request.form['firstName']
         lastName = request.form['lastName']
         phone = request.form['phone']
-        with sqlite3.connect('database.db') as con:
+        with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as con:
             try:
                 cur = con.cursor()
                 cur.execute('UPDATE users SET firstName = ?, lastName = ?, phone = ? WHERE email = ?', (firstName, lastName, phone, email))
@@ -262,7 +275,8 @@ def changePassword():
         oldPassword = hashlib.md5(oldPassword.encode()).hexdigest()
         newPassword = request.form['newpassword']
         newPassword = hashlib.md5(newPassword.encode()).hexdigest()
-        with sqlite3.connect('database.db') as conn:
+        with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
             cur = conn.cursor()
             cur.execute("SELECT userId, password FROM users WHERE email = ?", (session['email'],))
             userId, password = cur.fetchone()
@@ -292,7 +306,8 @@ def addToCart():
     if 'email' not in session:
         return redirect(url_for('loginForm'))
     productId = int(request.args.get('productId'))
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute("SELECT userId FROM users WHERE email = ?", (session['email'], ))
         userId = cur.fetchone()[0]
@@ -319,7 +334,8 @@ def cart():
         return redirect(url_for('loginForm'))
     loggedIn, firstName, noOfItems = getLoginDetails()
     email = session['email']
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute("SELECT userId FROM users WHERE email = ?", (email, ))
         userId = cur.fetchone()[0]
@@ -333,6 +349,7 @@ def cart():
     existItem = False
     if noOfItems > 0:
         existItem = True
+    conn.close()
     return render_template("cart.html", products = products, totalPrice=totalPrice, existItem=existItem, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
 
 @app.route("/removeFromCart")
@@ -341,7 +358,8 @@ def removeFromCart():
         return redirect(url_for('loginForm'))
     email = session['email']
     productId = int(request.args.get('productId'))
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute("SELECT userId FROM users WHERE email = ?", (email, ))
         userId = cur.fetchone()[0]
@@ -367,7 +385,8 @@ def newOrder():
     if 'email' not in session:
         return redirect(url_for('loginForm'))
     productId = int(request.args.get('productId'))
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute("SELECT userId FROM users WHERE email = ?", (session['email'], ))
         userId = cur.fetchone()[0]
@@ -389,7 +408,8 @@ def newOrder():
 def newAllOrder():
     if 'email' not in session:
         return redirect(url_for('loginForm'))
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute("SELECT userId FROM users WHERE email = ?", (session['email'], ))
         userId = cur.fetchone()[0]
@@ -419,7 +439,8 @@ def orders():
         return redirect(url_for('loginForm'))
     loggedIn, firstName, noOfItems = getLoginDetails()
     email = session['email']
-    with sqlite3.connect('database.db') as conn:
+    with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute("SELECT userId FROM users WHERE email = ?", (email, ))
         userId = cur.fetchone()[0]
@@ -435,6 +456,7 @@ def orders():
     existOrder = False
     if len(orderss) > 0:
         existOrder = True
+    conn.close()
     return render_template("order.html", orderss=orderss, existOrder=existOrder, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
 
 if __name__=="__main__":

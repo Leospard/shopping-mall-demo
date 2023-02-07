@@ -1,7 +1,8 @@
-import sqlite3, hashlib
+import pymysql, hashlib, os
 
 #Open database
-conn = sqlite3.connect('database.db')
+conn = pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5)
 
 #Create table
 conn.execute('''CREATE TABLE users 
@@ -48,7 +49,8 @@ conn.execute('''CREATE TABLE orders
 
 conn.close()
 
-with sqlite3.connect('database.db') as conn:
+with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
+            passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
     cur = conn.cursor()
     cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (1, 'Men\'s'))
     cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (2, 'Women\'s'))
