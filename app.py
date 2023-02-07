@@ -27,7 +27,6 @@ def getLoginDetails():
             userId, firstName = cur.fetchone()
             cur.execute("SELECT count(productId) FROM kart WHERE userId = ?", (userId, ))
             noOfItems = cur.fetchone()[0]
-    conn.close()
     return (loggedIn, firstName, noOfItems)
 
 def parse(data):
@@ -91,7 +90,6 @@ def root():
         categoryData = cur.fetchall()
     if len(itemData) > 9:
         itemData = itemData[0:9]
-    conn.close()
     return render_template('index.html', itemData=itemData, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems, categoryData=categoryData)
 
 @app.route("/add")
@@ -101,7 +99,6 @@ def admin():
         cur = conn.cursor()
         cur.execute("SELECT categoryId, name FROM categories")
         categories = cur.fetchall()
-    conn.close()
     return render_template('add.html', categories=categories)
 
 @app.route("/addItem", methods=["GET", "POST"])
@@ -129,7 +126,6 @@ def addItem():
             except:
                 msg="error occured"
                 conn.rollback()
-        conn.close()
         print(msg)
         return redirect(url_for('root'))
 
@@ -140,7 +136,6 @@ def remove():
         cur = conn.cursor()
         cur.execute('SELECT productId, name, price, description, image, stock FROM products')
         data = cur.fetchall()
-    conn.close()
     return render_template('remove.html', data=data)
 
 @app.route("/removeItem")
@@ -156,7 +151,6 @@ def removeItem():
         except:
             conn.rollback()
             msg = "Error occured"
-    conn.close()
     print(msg)
     return redirect(url_for('root'))
 
@@ -173,7 +167,6 @@ def displayCategory(categoryId):
         curr = conn.cursor()
         curr.execute("SELECT categories.name from categories WHERE categories.categoryId = ?", (categoryId,))
         categoryName = curr.fetchone()[0]
-    conn.close()
     existItem = True
     if len(itemData) == 0:
         existItem = False
@@ -224,7 +217,6 @@ def register():
             except:
                 con.rollback()
                 flash("Error occured")
-        con.close()
         return redirect(url_for('root'))
 
 @app.route("/profile")
@@ -236,7 +228,6 @@ def profileForm():
         cur = conn.cursor()
         cur.execute("SELECT userId, email, firstName, lastName, phone FROM users WHERE email = ?", (session['email'], ))
         profileData = cur.fetchone()
-    conn.close()
     return render_template("profile.html", profileData=profileData)
 
 @app.route("/editProfile", methods = ['GET', 'POST'])
@@ -256,7 +247,6 @@ def editProfile():
             except:
                 con.rollback()
                 flash("Error occured")
-        con.close()
         return redirect(url_for('root'))
 
 @app.route("/password")
@@ -291,7 +281,6 @@ def changePassword():
                 return redirect(url_for('root'))
             else:
                 msg = "Wrong password"
-        conn.close()
         return render_template("password.html", msg=msg)
     else:
         return render_template("password.html", msg='')
@@ -325,7 +314,6 @@ def addToCart():
         except:
             conn.rollback()
             flash("Error occured")
-    conn.close()
     return redirect_back()
 
 @app.route("/cart")
@@ -349,7 +337,6 @@ def cart():
     existItem = False
     if noOfItems > 0:
         existItem = True
-    conn.close()
     return render_template("cart.html", products = products, totalPrice=totalPrice, existItem=existItem, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
 
 @app.route("/removeFromCart")
@@ -377,7 +364,6 @@ def removeFromCart():
         except:
             conn.rollback()
             flash("error occured")
-    conn.close()
     return redirect_back()
 
 @app.route("/newOrder")
@@ -401,7 +387,6 @@ def newOrder():
         except:
             conn.rollback()
             flash("Trade failed")
-    conn.close()
     return redirect(url_for('orders'))
 
 @app.route("/newAllOrder")
@@ -430,7 +415,6 @@ def newAllOrder():
         except:
             conn.rollback()
             flash("Trade failed")
-    conn.close()
     return redirect(url_for('orders'))
 
 @app.route("/orders")
@@ -456,7 +440,6 @@ def orders():
     existOrder = False
     if len(orderss) > 0:
         existOrder = True
-    conn.close()
     return render_template("order.html", orderss=orderss, existOrder=existOrder, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
 
 if __name__=="__main__":
