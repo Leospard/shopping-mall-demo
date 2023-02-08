@@ -23,11 +23,10 @@ def getLoginDetails():
             noOfItems = 0
         else:
             loggedIn = True
-            cur.execute("SELECT userId, firstName FROM users WHERE email = ?", (session['email'], ))
+            cur.execute("SELECT userId, firstName FROM users WHERE email = %s", (session['email'], ))
             userId, firstName = cur.fetchone()
-            cur.execute("SELECT count(productId) FROM kart WHERE userId = ?", (userId, ))
+            cur.execute("SELECT count(productId) FROM kart WHERE userId = %s", (userId, ))
             noOfItems = cur.fetchone()[0]
-    conn.close()
     return (loggedIn, firstName, noOfItems)
 
 def parse(data):
@@ -91,7 +90,6 @@ def root():
         categoryData = cur.fetchall()
     if len(itemData) > 9:
         itemData = itemData[0:9]
-    conn.close()
     return render_template('index.html', itemData=itemData, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems, categoryData=categoryData)
 
 @app.route("/add")
@@ -101,7 +99,6 @@ def admin():
         cur = conn.cursor()
         cur.execute("SELECT categoryId, name FROM categories")
         categories = cur.fetchall()
-    conn.close()
     return render_template('add.html', categories=categories)
 
 @app.route("/addItem", methods=["GET", "POST"])
@@ -123,13 +120,12 @@ def addItem():
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
             try:
                 cur = conn.cursor()
-                cur.execute('''INSERT INTO products (name, price, description, image, stock, categoryId) VALUES (?, ?, ?, ?, ?, ?)''', (name, price, description, imagename, stock, categoryId))
+                cur.execute('''INSERT INTO products (name, price, description, image, stock, categoryId) VALUES (%s, %s, %s, %s, %s, %s)''', (name, price, description, imagename, stock, categoryId))
                 conn.commit()
                 msg="added successfully"
             except:
                 msg="error occured"
                 conn.rollback()
-        conn.close()
         print(msg)
         return redirect(url_for('root'))
 
@@ -140,7 +136,6 @@ def remove():
         cur = conn.cursor()
         cur.execute('SELECT productId, name, price, description, image, stock FROM products')
         data = cur.fetchall()
-    conn.close()
     return render_template('remove.html', data=data)
 
 @app.route("/removeItem")
@@ -150,13 +145,12 @@ def removeItem():
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         try:
             cur = conn.cursor()
-            cur.execute('DELETE FROM products WHERE productID = ?', (productId, ))
+            cur.execute('DELETE FROM products WHERE productID = %s', (productId, ))
             conn.commit()
             msg = "Deleted successsfully"
         except:
             conn.rollback()
             msg = "Error occured"
-    conn.close()
     print(msg)
     return redirect(url_for('root'))
 
@@ -167,13 +161,12 @@ def displayCategory(categoryId):
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
         cur.execute(
-            "SELECT products.productId, products.name, products.price, products.description, products.image, products.stock, categories.name FROM products, categories WHERE products.categoryId = categories.categoryId AND categories.categoryId = ?",
+            "SELECT products.productId, products.name, products.price, products.description, products.image, products.stock, categories.name FROM products, categories WHERE products.categoryId = categories.categoryId AND categories.categoryId = %s",
             (categoryId,))
         itemData = cur.fetchall()
         curr = conn.cursor()
-        curr.execute("SELECT categories.name from categories WHERE categories.categoryId = ?", (categoryId,))
+        curr.execute("SELECT categories.name from categories WHERE categories.categoryId = %s", (categoryId,))
         categoryName = curr.fetchone()[0]
-    conn.close()
     existItem = True
     if len(itemData) == 0:
         existItem = False
@@ -218,13 +211,12 @@ def register():
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as con:
             try:
                 cur = con.cursor()
-                cur.execute('INSERT INTO users (password, email, firstName, lastName, phone) VALUES (?, ?, ?, ?, ?)', (hashlib.md5(password.encode()).hexdigest(), email, firstName, lastName, phone))
+                cur.execute('INSERT INTO users (password, email, firstName, lastName, phone) VALUES (%s, %s, %s, %s, %s)', (hashlib.md5(password.encode()).hexdigest(), email, firstName, lastName, phone))
                 con.commit()
                 flash("Registered Successfully")
             except:
                 con.rollback()
                 flash("Error occured")
-        con.close()
         return redirect(url_for('root'))
 
 @app.route("/profile")
@@ -234,9 +226,8 @@ def profileForm():
     with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT userId, email, firstName, lastName, phone FROM users WHERE email = ?", (session['email'], ))
+        cur.execute("SELECT userId, email, firstName, lastName, phone FROM users WHERE email = %s", (session['email'], ))
         profileData = cur.fetchone()
-    conn.close()
     return render_template("profile.html", profileData=profileData)
 
 @app.route("/editProfile", methods = ['GET', 'POST'])
@@ -250,13 +241,12 @@ def editProfile():
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as con:
             try:
                 cur = con.cursor()
-                cur.execute('UPDATE users SET firstName = ?, lastName = ?, phone = ? WHERE email = ?', (firstName, lastName, phone, email))
+                cur.execute('UPDATE users SET firstName = %s, lastName = %s, phone = %s WHERE email = %s', (firstName, lastName, phone, email))
                 con.commit()
                 flash("Saved Successfully")
             except:
                 con.rollback()
                 flash("Error occured")
-        con.close()
         return redirect(url_for('root'))
 
 @app.route("/password")
@@ -278,11 +268,11 @@ def changePassword():
         with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
             cur = conn.cursor()
-            cur.execute("SELECT userId, password FROM users WHERE email = ?", (session['email'],))
+            cur.execute("SELECT userId, password FROM users WHERE email = %s", (session['email'],))
             userId, password = cur.fetchone()
             if (password == oldPassword):
                 try:
-                    cur.execute("UPDATE users SET password = ? WHERE userId = ?", (newPassword, userId))
+                    cur.execute("UPDATE users SET password = %s WHERE userId = %s", (newPassword, userId))
                     conn.commit()
                     flash("Changed successfully")
                 except:
@@ -291,7 +281,6 @@ def changePassword():
                 return redirect(url_for('root'))
             else:
                 msg = "Wrong password"
-        conn.close()
         return render_template("password.html", msg=msg)
     else:
         return render_template("password.html", msg='')
@@ -309,23 +298,22 @@ def addToCart():
     with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT userId FROM users WHERE email = ?", (session['email'], ))
+        cur.execute("SELECT userId FROM users WHERE email = %s", (session['email'], ))
         userId = cur.fetchone()[0]
-        cur.execute("SELECT num FROM kart WHERE userId = ? AND productId = ?", (userId, productId))
+        cur.execute("SELECT num FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
         num = cur.fetchall()
         print(num)
         try:
             if len(num) > 0:
                 new_num = num[0][0] + 1
-                cur.execute("UPDATE kart SET num = ? WHERE userId = ? AND productId = ?", (new_num, userId, productId))
+                cur.execute("UPDATE kart SET num = %s WHERE userId = %s AND productId = %s", (new_num, userId, productId))
             else:
-                cur.execute("INSERT INTO kart (userId, productId, num) VALUES (?, ?, ?)", (userId, productId, 1))
+                cur.execute("INSERT INTO kart (userId, productId, num) VALUES (%s, %s, %s)", (userId, productId, 1))
             conn.commit()
             flash("Added successfully")
         except:
             conn.rollback()
             flash("Error occured")
-    conn.close()
     return redirect_back()
 
 @app.route("/cart")
@@ -337,9 +325,9 @@ def cart():
     with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT userId FROM users WHERE email = ?", (email, ))
+        cur.execute("SELECT userId FROM users WHERE email = %s", (email, ))
         userId = cur.fetchone()[0]
-        cur.execute("SELECT products.productId, products.name, products.price, products.image, kart.num FROM products, kart WHERE products.productId = kart.productId AND kart.userId = ?", (userId, ))
+        cur.execute("SELECT products.productId, products.name, products.price, products.image, kart.num FROM products, kart WHERE products.productId = kart.productId AND kart.userId = %s", (userId, ))
         products = cur.fetchall()
     totalPrice = 0
     for i,row in enumerate(products):
@@ -349,7 +337,6 @@ def cart():
     existItem = False
     if noOfItems > 0:
         existItem = True
-    conn.close()
     return render_template("cart.html", products = products, totalPrice=totalPrice, existItem=existItem, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
 
 @app.route("/removeFromCart")
@@ -361,23 +348,22 @@ def removeFromCart():
     with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT userId FROM users WHERE email = ?", (email, ))
+        cur.execute("SELECT userId FROM users WHERE email = %s", (email, ))
         userId = cur.fetchone()[0]
-        cur.execute("SELECT num FROM kart WHERE userId = ? AND productId = ?", (userId, productId))
+        cur.execute("SELECT num FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
         num = cur.fetchall()
         try:
             if num[0][0] > 1:
                 new_num = num[0][0] - 1
-                cur.execute("UPDATE kart SET num = ? WHERE userId = ? AND productId = ?",
+                cur.execute("UPDATE kart SET num = %s WHERE userId = %s AND productId = %s",
                             (new_num, userId, productId))
             else:
-                cur.execute("DELETE FROM kart WHERE userId = ? AND productId = ?", (userId, productId))
+                cur.execute("DELETE FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
             conn.commit()
             flash("removed successfully")
         except:
             conn.rollback()
             flash("error occured")
-    conn.close()
     return redirect_back()
 
 @app.route("/newOrder")
@@ -388,20 +374,19 @@ def newOrder():
     with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT userId FROM users WHERE email = ?", (session['email'], ))
+        cur.execute("SELECT userId FROM users WHERE email = %s", (session['email'], ))
         userId = cur.fetchone()[0]
-        cur.execute("SELECT num FROM kart WHERE userId = ? AND productId = ?", (userId, productId))
+        cur.execute("SELECT num FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
         num = cur.fetchone()[0]
         orderId = int(time.time() * 100) * 10000 + productId
         try:
-            cur.execute("INSERT INTO orders (orderId, userId, productId, num) VALUES (?, ?, ?, ?)", (orderId, userId, productId, num))
-            cur.execute("DELETE FROM kart WHERE userId = ? AND productId = ?", (userId, productId))
+            cur.execute("INSERT INTO orders (orderId, userId, productId, num) VALUES (%s, %s, %s, %s)", (orderId, userId, productId, num))
+            cur.execute("DELETE FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
             conn.commit()
             flash("Trade successfully")
         except:
             conn.rollback()
             flash("Trade failed")
-    conn.close()
     return redirect(url_for('orders'))
 
 @app.route("/newAllOrder")
@@ -411,9 +396,9 @@ def newAllOrder():
     with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT userId FROM users WHERE email = ?", (session['email'], ))
+        cur.execute("SELECT userId FROM users WHERE email = %s", (session['email'], ))
         userId = cur.fetchone()[0]
-        cur.execute("SELECT num, productId FROM kart WHERE userId = ?", (userId, ))
+        cur.execute("SELECT num, productId FROM kart WHERE userId = %s", (userId, ))
         orders = cur.fetchall()
         if len(orders)==0:
             flash("No Trade")
@@ -423,14 +408,13 @@ def newAllOrder():
                 num = order[0]
                 productId = order[1]
                 orderId = int(time.time() * 100) * 10000 + productId
-                cur.execute("INSERT INTO orders (orderId, userId, productId, num) VALUES (?, ?, ?, ?)", (orderId, userId, productId, num))
-                cur.execute("DELETE FROM kart WHERE userId = ? AND productId = ?", (userId, productId))
+                cur.execute("INSERT INTO orders (orderId, userId, productId, num) VALUES (%s, %s, %s, %s)", (orderId, userId, productId, num))
+                cur.execute("DELETE FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
             conn.commit()
             flash("Trade successfully")
         except:
             conn.rollback()
             flash("Trade failed")
-    conn.close()
     return redirect(url_for('orders'))
 
 @app.route("/orders")
@@ -442,9 +426,9 @@ def orders():
     with pymysql.connect(host=os.environ['MYSQL_ENDPOINT'], port=int(os.environ['MYSQL_PORT']), user=os.environ['MYSQL_USER'],
             passwd=os.environ['MYSQL_PASSWORD'], db=os.environ['MYSQL_DBNAME'], connect_timeout=5) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT userId FROM users WHERE email = ?", (email, ))
+        cur.execute("SELECT userId FROM users WHERE email = %s", (email, ))
         userId = cur.fetchone()[0]
-        cur.execute("SELECT orders.num, orders.orderId, products.name, products.price FROM products, orders WHERE products.productId = orders.productId AND orders.userId = ?", (userId, ))
+        cur.execute("SELECT orders.num, orders.orderId, products.name, products.price FROM products, orders WHERE products.productId = orders.productId AND orders.userId = %s", (userId, ))
         orderss = cur.fetchall()
     for i,row in enumerate(orderss):
         partialPrice = row[0] * row[3]
@@ -456,7 +440,6 @@ def orders():
     existOrder = False
     if len(orderss) > 0:
         existOrder = True
-    conn.close()
     return render_template("order.html", orderss=orderss, existOrder=existOrder, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
 
 if __name__=="__main__":
