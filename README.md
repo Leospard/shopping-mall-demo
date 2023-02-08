@@ -18,13 +18,13 @@ Run it:
 ```shell
 $ python3 app.py
 ```
-("database.py" is used to initialize the database.
+("index.py" is used to initialize the database.
 
 "database.db" is stored with some of uploaded information.)
 
 Access the index-page locally (but online):
 ```
-http://localhost:5000
+http://localhost:XXXX (default 5000)
 ```
 
 ### 2. User Interface Display

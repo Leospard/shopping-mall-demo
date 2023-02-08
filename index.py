@@ -46,76 +46,47 @@ def handler(event, context):
     conn.ping(reconnect=True)
     try:
         # Create table
-        # conn.execute('''CREATE TABLE users 
-        #         (userId INTEGER PRIMARY KEY, 
-        #         password TEXT,
-        #         email TEXT,
-        #         firstName TEXT,
-        #         lastName TEXT,
-        #         phone TEXT
-        #         )''')
-
-        # conn.execute('''CREATE TABLE products
-        #         (productId INTEGER PRIMARY KEY,
-        #         name TEXT,
-        #         price REAL,
-        #         description TEXT,
-        #         image TEXT,
-        #         stock INTEGER,
-        #         categoryId INTEGER,
-        #         FOREIGN KEY(categoryId) REFERENCES categories(categoryId)
-        #         )''')
-
-        # conn.execute('''CREATE TABLE kart
-        #         (userId INTEGER,
-        #         productId INTEGER,
-        #         num INTEGER,
-        #         FOREIGN KEY(userId) REFERENCES users(userId),
-        #         FOREIGN KEY(productId) REFERENCES products(productId)
-        #         )''')
-
-        # conn.execute('''CREATE TABLE categories
-        #         (categoryId INTEGER PRIMARY KEY,
-        #         name TEXT
-        #         )''')
-
-        # conn.execute('''CREATE TABLE orders
-        #         (orderId INTEGER PRIMARY KEY,
-        #         userId INTEGER,
-        #         productId INTEGER,
-        #         num INTEGER
-        #         )''')
         cur = conn.cursor()
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (1, 'Men\'s'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (2, 'Women\'s'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (3, 'HeadPhones'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (4, 'Computers'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (5, 'CellPhones'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (6, 'Snacks'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (7, 'Drinks'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (8, 'CookedFoods'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (9, 'Basketball'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (10, 'Tennis'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (11, 'Golf'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (12, 'Clothing'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (13, 'Camping'))
-        cur.execute('''INSERT INTO categories (categoryId, name) VALUES (?, ?)''', (14, 'Cycling'))
+        cur.execute("CREATE TABLE users (userId INTEGER PRIMARY KEY, password TEXT, email TEXT, firstName TEXT, lastName TEXT, phone TEXT)")
+
+        cur.execute("CREATE TABLE products (productId INTEGER PRIMARY KEY, name TEXT, price REAL, description TEXT, image TEXT, stock INTEGER, categoryId INTEGER, FOREIGN KEY(categoryId) REFERENCES categories(categoryId))")
+
+        cur.execute("CREATE TABLE kart (userId INTEGER, productId INTEGER, num INTEGER, FOREIGN KEY(userId) REFERENCES users(userId), FOREIGN KEY(productId) REFERENCES products(productId))")
+
+        cur.execute("CREATE TABLE categories (categoryId INTEGER PRIMARY KEY, name TEXT)")
+
+        cur.execute("CREATE TABLE orders (orderId INTEGER PRIMARY KEY, userId INTEGER, productId INTEGER, num INTEGER)")
+        
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (1, 'Men\'s'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (2, 'Women\'s'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (3, 'HeadPhones'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (4, 'Computers'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (5, 'CellPhones'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (6, 'Snacks'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (7, 'Drinks'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (8, 'CookedFoods'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (9, 'Basketball'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (10, 'Tennis'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (11, 'Golf'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (12, 'Clothing'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (13, 'Camping'))
+        cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (14, 'Cycling'))
         password = '12345678'
         email = '1023553676@qq.com'
         firstName = 'Admin'
         lastName = 'Tony'
         phone = '10101010'
-        cur.execute('''INSERT INTO users (password, email, firstName, lastName, phone) VALUES (?, ?, ?, ?, ?)''', (hashlib.md5(password.encode()).hexdigest(), email, firstName, lastName, phone))
+        cur.execute("INSERT INTO users (userId, password, email, firstName, lastName, phone) VALUES (%s, %s, %s, %s, %s, %s)", ("1", hashlib.md5(password.encode()).hexdigest(), email, firstName, lastName, phone))
         password = '12345678'
         email = '1354178359@qq.com'
         firstName = 'Admin2'
         lastName = 'Ben'
         phone = '1010101'
-        cur.execute('''INSERT INTO users (password, email, firstName, lastName, phone) VALUES (?, ?, ?, ?, ?)''',
-                    (hashlib.md5(password.encode()).hexdigest(), email, firstName, lastName, phone))
+        cur.execute("INSERT INTO users (userId, password, email, firstName, lastName, phone) VALUES (%s, %s, %s, %s, %s, %s)",
+                    ("2", hashlib.md5(password.encode()).hexdigest(), email, firstName, lastName, phone))
         conn.commit()
 
-        return 
+        return "database init success"
     except Exception as e:
         logger.error(
             "ERROR: Unexpected error: Could not connect to MySql instance.")
