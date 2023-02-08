@@ -2,6 +2,7 @@
 1. 在部署本应用前请提前准备好 MySQL 数据库。
 MySQL 数据库既可以选择阿里云 MySQL 数据库也可以选择其它 MySQL 数据库。以使用阿里云 MySQL 数据库为例，若使用vpc方式连接阿里云 MySQL 数据库，请参考文档[配置网络](https://help.aliyun.com/document_detail/84514.html)配置VPC网络。
 2. 环境变量设置
+
 | 参数名称 | 参数类型 | 是否必填 | 例子 |   参数含义 | 
 | --- |  --- |  --- | --- | --- |
 | MYSQL_ENDPOINT | String | 必填 | rm-uf6rrswxxxxxxxxxxxx.mysql.rds.aliyuncs.com |   数据库网址，用于连接数据库 |
