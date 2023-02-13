@@ -85,10 +85,10 @@ def init():
         # Create table
         cur = conn.cursor()
         cur.execute("CREATE TABLE users (userId INTEGER PRIMARY KEY, password TEXT, email TEXT, firstName TEXT, lastName TEXT, phone TEXT)")
-        cur.execute("CREATE TABLE products (productId INTEGER PRIMARY KEY, name TEXT, price REAL, description TEXT, image TEXT, stock INTEGER, categoryId INTEGER, FOREIGN KEY(categoryId) REFERENCES categories(categoryId))")
-        cur.execute("CREATE TABLE kart (userId INTEGER, productId INTEGER, num INTEGER, FOREIGN KEY(userId) REFERENCES users(userId), FOREIGN KEY(productId) REFERENCES products(productId))")
         cur.execute("CREATE TABLE categories (categoryId INTEGER PRIMARY KEY, name TEXT)")
         cur.execute("CREATE TABLE orders (orderId INTEGER PRIMARY KEY, userId INTEGER, productId INTEGER, num INTEGER)")
+        cur.execute("CREATE TABLE products (productId INTEGER PRIMARY KEY, name TEXT, price REAL, description TEXT, image TEXT, stock INTEGER, categoryId INTEGER, FOREIGN KEY(categoryId) REFERENCES categories(categoryId))")
+        cur.execute("CREATE TABLE kart (userId INTEGER, productId INTEGER, num INTEGER, FOREIGN KEY(userId) REFERENCES users(userId), FOREIGN KEY(productId) REFERENCES products(productId))")
         
         cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (1, 'Men\'s'))
         cur.execute("INSERT INTO categories (categoryId, name) VALUES (%s, %s)", (2, 'Women\'s'))
@@ -119,7 +119,8 @@ def init():
         cur.execute("INSERT INTO users (userId, password, email, firstName, lastName, phone) VALUES (%s, %s, %s, %s, %s, %s)",
                     ("2", hashlib.md5(password.encode()).hexdigest(), email, firstName, lastName, phone))
         conn.commit()
-    root()
+    return redirect(url_for('root'))
+
 
 @app.route('/')
 def root():
