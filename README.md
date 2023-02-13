@@ -11,7 +11,7 @@ MySQL 数据库既可以选择阿里云 MySQL 数据库也可以选择其它 MyS
 | MYSQL_USER | String | 必填 | fc |   数据库用户名 |  
 | MYSQL_PASSWORD | String | 必填 | xxxxxxxx |   数据库密码 |  
 3. 初始化数据库
-部署一个 python3.6 的函数实例执行 index.py，可构建依赖层引入 requirements.txt 内需要的库。
+服务开启后访问 domain/init 初始化数据库。
 
 # Shopping More
 > A simple and comfortable shopping-mall app on Flask-bootstrap framework.
