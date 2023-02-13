@@ -376,7 +376,8 @@ def cart():
     totalPrice = 0
     for i,row in enumerate(products):
         partialPrice = row[2] * row[4]
-        products[i] = (row[0], row[1], row[2], row[3], row[4], partialPrice)
+        products[i] = list(products[i])
+        products[i] = [row[0], row[1], row[2], row[3], row[4], partialPrice]
         totalPrice += partialPrice
     existItem = False
     if noOfItems > 0:
