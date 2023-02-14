@@ -355,7 +355,8 @@ def addToCart():
                 cur.execute("INSERT INTO kart (userId, productId, num) VALUES (%s, %s, %s)", (userId, productId, 1))
             conn.commit()
             flash("Added successfully")
-        except:
+        except Exception as e:
+            print(e)
             conn.rollback()
             flash("Error occured")
     return redirect_back()
@@ -374,14 +375,15 @@ def cart():
         cur.execute("SELECT products.productId, products.name, products.price, products.image, kart.num FROM products, kart WHERE products.productId = kart.productId AND kart.userId = %s", (userId, ))
         products = cur.fetchall()
     totalPrice = 0
+    productList = []
     for i,row in enumerate(products):
         partialPrice = row[2] * row[4]
-        products[i] = (row[0], row[1], row[2], row[3], row[4], partialPrice)
+        productList.append([row[0], row[1], row[2], row[3], row[4], partialPrice])
         totalPrice += partialPrice
     existItem = False
     if noOfItems > 0:
         existItem = True
-    return render_template("cart.html", products = products, totalPrice=totalPrice, existItem=existItem, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
+    return render_template("cart.html", products = productList, totalPrice=totalPrice, existItem=existItem, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
 
 @app.route("/removeFromCart")
 def removeFromCart():
@@ -405,7 +407,8 @@ def removeFromCart():
                 cur.execute("DELETE FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
             conn.commit()
             flash("removed successfully")
-        except:
+        except Exception as e:
+            print(e)
             conn.rollback()
             flash("error occured")
     return redirect_back()
@@ -422,13 +425,15 @@ def newOrder():
         userId = cur.fetchone()[0]
         cur.execute("SELECT num FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
         num = cur.fetchone()[0]
-        orderId = int(time.time() * 100) * 10000 + productId
+        orderId = int(time.time()) + productId
+        print(userId, " ", num, " ", orderId)
         try:
             cur.execute("INSERT INTO orders (orderId, userId, productId, num) VALUES (%s, %s, %s, %s)", (orderId, userId, productId, num))
             cur.execute("DELETE FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
             conn.commit()
             flash("Trade successfully")
-        except:
+        except Exception as e:
+            print(e)
             conn.rollback()
             flash("Trade failed")
     return redirect(url_for('orders'))
@@ -451,7 +456,7 @@ def newAllOrder():
             for order in orders:
                 num = order[0]
                 productId = order[1]
-                orderId = int(time.time() * 100) * 10000 + productId
+                orderId = int(time.time()) + productId
                 cur.execute("INSERT INTO orders (orderId, userId, productId, num) VALUES (%s, %s, %s, %s)", (orderId, userId, productId, num))
                 cur.execute("DELETE FROM kart WHERE userId = %s AND productId = %s", (userId, productId))
             conn.commit()
@@ -473,18 +478,19 @@ def orders():
         cur.execute("SELECT userId FROM users WHERE email = %s", (email, ))
         userId = cur.fetchone()[0]
         cur.execute("SELECT orders.num, orders.orderId, products.name, products.price FROM products, orders WHERE products.productId = orders.productId AND orders.userId = %s", (userId, ))
-        orderss = cur.fetchall()
-    for i,row in enumerate(orderss):
+        orders = cur.fetchall()
+    orderList=[]
+    for i,row in enumerate(orders):
         partialPrice = row[0] * row[3]
         time_stamp = int(row[1] / 1000000)
         time_array = time.localtime(time_stamp)
         str_date = time.strftime("%Y-%m-%d %H:%M:%S", time_array)
         color = random_color()
-        orderss[i] = (row[0], row[1], row[2], row[3], partialPrice, str_date, color)
+        orderList.append([row[0], row[1], row[2], row[3], partialPrice, str_date, color])
     existOrder = False
-    if len(orderss) > 0:
+    if len(orders) > 0:
         existOrder = True
-    return render_template("order.html", orderss=orderss, existOrder=existOrder, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
+    return render_template("order.html", orders=orderList, existOrder=existOrder, loggedIn=loggedIn, firstName=firstName, noOfItems=noOfItems)
 
 if __name__=="__main__":
     app.run(debug=True)
